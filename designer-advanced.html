@@ -696,48 +696,7 @@
 
         // Функция для отправки данных в Google Таблицу
         // Функция для отправки данных в Google Таблицу
-        async function sendDataToGoogleSheets(data) {
-            try {
-                // Замените на ваш URL Google Apps Script
-                const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxeoRBN7KAnDzvn6a6TuzIgYWK0JlOuBfs-PY0MkIqljVnK7RPKndUqNGydGbYzFYjt/exec';
-                
-                console.log('Отправляем данные:', data);
-                
-                const response = await fetch(GOOGLE_SCRIPT_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(data)
-                });
-                
-                console.log('Ответ сервера:', response.status, response.statusText);
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                
-                const result = await response.json();
-                console.log('Результат:', result);
-                
-                if (result.success) {
-                    console.log('Данные успешно отправлены в Google Таблицу');
-                    if (result.spreadsheetUrl) {
-                        console.log('Ссылка на таблицу:', result.spreadsheetUrl);
-                    }
-                    return true;
-                } else {
-                    console.error('Ошибка при отправке данных:', result.error);
-                    console.error('Сообщение:', result.message);
-                    return false;
-                }
-            } catch (error) {
-                console.error('Ошибка при отправке данных:', error);
-                console.error('Тип ошибки:', error.name);
-                console.error('Сообщение ошибки:', error.message);
-                return false;
-            }
-        }
+        
         // Функция для получения названия формы по значению
         function getShapeName(shapeValue) {
             const shapeNames = {
@@ -821,48 +780,64 @@
 
         // Функция для отправки данных в Google Таблицу
         // Функция для отправки данных в Google Таблицу
-        async function sendDataToGoogleSheets(data) {
-            try {
-                // Замените на ваш URL Google Apps Script
-                const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxeoRBN7KAnDzvn6a6TuzIgYWK0JlOuBfs-PY0MkIqljVnK7RPKndUqNGydGbYzFYjt/exec';
-                
-                console.log('Отправляем данные:', data);
-                
-                const response = await fetch(GOOGLE_SCRIPT_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(data)
-                });
-                
-                console.log('Ответ сервера:', response.status, response.statusText);
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+        
+                // Функция для отправки данных через JSONP (обход CORS)
+        function sendDataToGoogleSheets(data) {
+            return new Promise((resolve, reject) => {
+                try {
+                    console.log('Отправляем данные через JSONP:', data);
+                    
+                    // Создаем уникальное имя функции для JSONP
+                    const callbackName = 'jsonp_callback_' + Math.round(100000 * Math.random());
+                    
+                    // Создаем глобальную функцию для обработки ответа
+                    window[callbackName] = function(response) {
+                        // Удаляем функцию после использования
+                        delete window[callbackName];
+                        if (document.getElementById('jsonp_script')) {
+                            document.head.removeChild(document.getElementById('jsonp_script'));
+                        }
+                        
+                        if (response.success) {
+                            console.log('Данные успешно отправлены в Google Таблицу');
+                            resolve(true);
+                        } else {
+                            console.error('Ошибка при отправке данных:', response.error);
+                            reject(new Error(response.error));
+                        }
+                    };
+                    
+                    // Создаем script тег для JSONP запроса
+                    const script = document.createElement('script');
+                    script.id = 'jsonp_script';
+                    
+                    // URL Google Apps Script с параметрами
+                    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxeoRBN7KAnDzvn6a6TuzIgYWK0JlOuBfs-PY0MkIqljVnK7RPKndUqNGydGbYzFYjt/exec';
+                    const params = new URLSearchParams({
+                        callback: callbackName,
+                        data: JSON.stringify(data)
+                    });
+                    
+                    script.src = GOOGLE_SCRIPT_URL + '?' + params.toString();
+                    script.onerror = function() {
+                        delete window[callbackName];
+                        if (document.getElementById('jsonp_script')) {
+                            document.head.removeChild(document.getElementById('jsonp_script'));
+                        }
+                        reject(new Error('Ошибка загрузки JSONP скрипта'));
+                    };
+                    
+                    document.head.appendChild(script);
+                    
+                } catch (error) {
+                    console.error('Ошибка при создании JSONP запроса:', error);
+                    reject(error);
                 }
-                
-                const result = await response.json();
-                console.log('Результат:', result);
-                
-                if (result.success) {
-                    console.log('Данные успешно отправлены в Google Таблицу');
-                    if (result.spreadsheetUrl) {
-                        console.log('Ссылка на таблицу:', result.spreadsheetUrl);
-                    }
-                    return true;
-                } else {
-                    console.error('Ошибка при отправке данных:', result.error);
-                    console.error('Сообщение:', result.message);
-                    return false;
-                }
-            } catch (error) {
-                console.error('Ошибка при отправке данных:', error);
-                console.error('Тип ошибки:', error.name);
-                console.error('Сообщение ошибки:', error.message);
-                return false;
-            }
+            });
         }
+
+
+        
         async function selectDesign() {
             // Собираем данные пользователя
             const userData = collectUserData();
