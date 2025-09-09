@@ -7,6 +7,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
             <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap" rel="stylesheet">
         <style>
             /* Убран пустой @font-face */
         </style>
@@ -305,6 +308,7 @@
             padding: 16px 24px;
             font-size: 16px;
             font-weight: 600;
+            font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             cursor: pointer;
             transition: background-color 0.3s ease;
             margin: 20px 0 40px;
@@ -863,60 +867,38 @@
         
         // Функция для обработки выбора дизайна с защитой от повторных нажатий
         async function selectDesign() {
-            // Проверяем, не обрабатывается ли уже заказ
             if (isOrderProcessing) {
                 console.log('Заказ уже обрабатывается, повторное нажатие игнорируется');
                 return;
             }
             
-            // Блокируем кнопку и устанавливаем флаг обработки
             isOrderProcessing = true;
             const orderButton = document.getElementById('orderButton');
-            const originalText = orderButton.textContent;
             
             try {
                 console.log('Начинаем процесс заказа...');
-                
-                // Обновляем текст кнопки
-                // orderButton.textContent = 'Обрабатываем заказ...';
                 orderButton.disabled = true;
-                orderButton.style.opacity = '0.6';
+                orderButton.style.backgroundColor = '#898991';
                 orderButton.style.cursor = 'not-allowed';
                 
-                // Собираем данные пользователя
                 const userData = collectUserData();
-                console.log('Собранные данные:', userData);
-                
-                // Отправляем данные в Google Таблицу
                 const success = await sendDataToGoogleSheets(userData);
                 
                 if (success) {
-                    console.log('Данные успешно отправлены, перенаправляем на страницу благодарности');
-                    // Обновляем текст кнопки перед перенаправлением
-                    // orderButton.textContent = 'Заказ принят!';
-                    // Небольшая задержка для показа пользователю
-                    setTimeout(() => {
-                        window.location.href = 'thank-you.html';
-                    }, 1000);
+                    console.log('Данные успешно отправлены, перенаправляем...');
+                    window.location.href = 'thank-you.html';
                 } else {
-                    console.error('Ошибка при отправке данных, но заказ принят');
-                    // Обновляем текст кнопки
-                    // orderButton.textContent = 'Заказ принят!';
-                    // Небольшая задержка для показа пользователю
-                    setTimeout(() => {
-                        window.location.href = 'thank-you.html';
-                    }, 1000);
+                    console.error('Произошла ошибка при сохранении данных, но заказ принят!');
+                    window.location.href = 'thank-you.html';
                 }
             } catch (error) {
-                console.error('Ошибка при обработке заказа:', error);
-                // В случае ошибки все равно перенаправляем на страницу благодарности
-                // orderButton.textContent = 'Заказ принят!';
-                setTimeout(() => {
-                    window.location.href = 'thank-you.html';
-                }, 1000);
+                console.error('Ошибка в процессе заказа:', error);
+                window.location.href = 'thank-you.html';
             }
             // Не сбрасываем флаг isOrderProcessing, чтобы кнопка оставалась заблокированной
-        }        // Initialize on page load
+        }
+        
+        // Initialize on page load
         document.addEventListener('DOMContentLoaded', () => {
             initCarousels();
             updateStickerPreview();
